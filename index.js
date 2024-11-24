@@ -1,83 +1,60 @@
 import express from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import router from './router.js';
+import { seq } from './db.js';
+import { Category, Product } from './models.js';
 
 const app = express();
 const PORT = 8000;
 
 app.use(express.json());
+app.use(router);
 
-let products = [
-  {
-    id: 1,
+app.get('/', (req, res) => {
+  res.send('<h1>Welcome to the Products and Categories API!</h1>');
+});
+
+async function seedDatabase() {
+  const electronics = await Category.create({ name: 'Electronics' });
+  const furniture = await Category.create({ name: 'Furniture' });
+
+  await Product.create({
     name: 'Smartphone',
     description: 'A high-end smartphone with excellent camera quality.',
     price: 599.99,
     imageUrl: 'https://example.com/img/smartphone.jpg',
-  },
-  {
-    id: 2,
+    categoryId: electronics.id,
+  });
+
+  await Product.create({
     name: 'Laptop',
     description: 'Lightweight and powerful laptop for work and play.',
     price: 999.99,
     imageUrl: 'https://example.com/img/laptop.jpg',
-  },
-  {
-    id: 3,
-    name: 'Headphones',
-    description: 'Wireless headphones with noise cancellation.',
-    price: 199.99,
-    imageUrl: 'https://example.com/img/headphones.jpg',
-  },
-];
+    categoryId: electronics.id,
+  });
 
-app.get('/', (req, res) => {
-  res.send('<h1>Welcome to the Products API!</h1><p>Use <code>/products</code> to view the products.</p>');
-});
+  await Product.create({
+    name: 'Sofa',
+    description: 'A comfortable sofa for your living room.',
+    price: 299.99,
+    imageUrl: 'https://example.com/img/sofa.jpg',
+    categoryId: furniture.id,
+  });
 
-// Получить список всех товаров
-app.get('/products', (req, res) => {
-  res.status(200).json(products);
-});
+  console.log('Database has been seeded with initial data.');
+}
 
-// Получить информацию о конкретном товаре по ID
-app.get('/products/:id', (req, res) => {
-  const product = products.find((product) => product.id == req.params.id);
-  if (product) {
-    res.status(200).json(product);
-  } else {
-    res.status(404).json({ message: 'Product not found' });
+(async () => {
+  try {
+    await seq.sync({ force: true });
+    console.log('Database synced successfully');
+
+    await seedDatabase();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error syncing database:', error);
   }
-});
-
-// Добавить новый товар
-app.post('/products', (req, res) => {
-  const { name, description, price, imageUrl } = req.body;
-  const newProduct = {
-    id: uuidv4(),
-    name,
-    description,
-    price,
-    imageUrl,
-  };
-  products.push(newProduct);
-  res.status(201).json(newProduct);
-});
-
-// Обновить информацию о товаре
-app.put('/products/:id', (req, res) => {
-  const { name, description, price, imageUrl } = req.body;
-  const product = products.find((product) => product.id == req.params.id);
-  if (product) {
-    product.name = name || product.name;
-    product.description = description || product.description;
-    product.price = price || product.price;
-    product.imageUrl = imageUrl || product.imageUrl;
-    res.status(200).json(product);
-  } else {
-    res.status(404).json({ message: 'Product not found' });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+})();
