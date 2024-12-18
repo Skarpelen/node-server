@@ -1,19 +1,6 @@
 import { Sequelize } from 'sequelize';
-import { seq } from './db.js';
-
-const Category = seq.define('category', {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    allowNull: false,
-    unique: true,
-  },
-  name: {
-    type: Sequelize.STRING,
-    allowNull: false,
-  },
-});
+import seq from '../config/database.js';
+import Category from './category.js';
 
 const Product = seq.define('product', {
   id: {
@@ -44,4 +31,4 @@ const Product = seq.define('product', {
 Category.hasMany(Product, { onDelete: 'CASCADE' });
 Product.belongsTo(Category, { onDelete: 'CASCADE' });
 
-export { Category, Product };
+export default Product;

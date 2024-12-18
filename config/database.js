@@ -9,4 +9,4 @@ const seq = new Sequelize('blog', 'root', 'root', {
   },
 });
 
-export { seq };
+export default seq;
